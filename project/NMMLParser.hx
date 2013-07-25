@@ -206,7 +206,7 @@ class NMMLParser extends NMEProject {
 			
 		}
 		
-		if (base.substr (0, 1) != "/" && base.substr (0, 1) != "\\" && base.substr (1, 1) != ":" && base.substr (0, 1) != ".") {
+		if (base.substr (0, 1) != "/" && base.substr (0, 1) != "\\" && base.substr (1, 1) != ":" && base.substr (0, 1) != "." && !FileSystem.exists (base)) {
 			
 			for (path in includePaths) {
 				
@@ -366,9 +366,9 @@ class NMMLParser extends NMEProject {
 			
 			targetPath = substitute (element.att.rename);
 			
-		} else {
+		} else if (element.has.path) {
 			
-			targetPath = path;
+			targetPath = substitute (element.att.path);
 			
 		}
 		
@@ -795,7 +795,7 @@ class NMMLParser extends NMEProject {
 						
 						if (path != null && path != "" && FileSystem.exists (path)) {
 							
-							var includeProject = new NMMLParser (path);
+							var includeProject = new NMMLParser (path, localDefines);
 							
 							if (addSourcePath) {
 								
@@ -831,18 +831,6 @@ class NMMLParser extends NMEProject {
 					
 					case "haxelib":
 						
-						/*var name:String = substitute (element.att.name);
-						compilerFlags.push ("-lib " + name);
-						
-						var path = Utils.getHaxelib (name);
-						
-						if (FileSystem.exists (path + "/include.nmml")) {
-							
-							var xml:Fast = new Fast (Xml.parse (File.getContent (path + "/include.nmml")).firstElement ());
-							parseXML (xml, "", path + "/");
-							
-						}*/
-						
 						var name = substitute (element.att.name);
 						var version = "";
 						
@@ -877,7 +865,7 @@ class NMMLParser extends NMEProject {
 						
 						if (includePath != "") {
 							
-							var includeProject = new NMMLParser (includePath);
+							var includeProject = new NMMLParser (includePath, localDefines);
 							
 							if (includeProject != null) {
 								
@@ -891,7 +879,6 @@ class NMMLParser extends NMEProject {
 									
 								}
 								
-								includeProject.sources.unshift (path);
 								merge (includeProject);
 								
 							}
@@ -899,27 +886,6 @@ class NMMLParser extends NMEProject {
 						}
 					
 					case "ndll":
-						
-						/*var name:String = substitute (element.att.name);
-						var haxelib:String = "";
-						
-						if (element.has.haxelib) {
-							
-							haxelib = substitute (element.att.haxelib);
-							
-						}
-						
-						if (extensionPath != "" && haxelib == "") {
-							
-							var ndll = new NDLL (name, "nme-extension");
-							ndll.extension = extensionPath;
-							ndlls.push (ndll);
-							
-						} else {
-							
-							ndlls.push (new NDLL (name, haxelib));
-							
-						}*/
 						
 						var name = substitute (element.att.name);
 						var haxelib = null;
@@ -955,36 +921,6 @@ class NMMLParser extends NMEProject {
 					
 					case "launchImage":
 						
-						/*var name:String = "";
-						
-						if (element.has.path) {
-							
-							name = substitute(element.att.path);
-							
-						} else {
-							
-							name = substitute(element.att.name);
-							
-						}
-						
-						var width:String = "";
-						var height:String = "";
-						
-						if (element.has.width) {
-							
-							width = substitute (element.att.width);
-							
-						}
-						
-						if (element.has.height) {
-							
-							height = substitute (element.att.height);
-							
-						}
-						
-						launchImages.push (new LaunchImage(name, width, height));*/
-						
-						
 						var name:String = "";
 						
 						if (element.has.path) {
@@ -1014,41 +950,6 @@ class NMMLParser extends NMEProject {
 						splashScreens.push (splashScreen);
 					
 					case "icon":
-						
-						/*var name:String = "";
-						
-						if (element.has.path) {
-							
-							name = substitute(element.att.path);
-							
-						} else {
-							
-							name = substitute(element.att.name);
-							
-						}
-						
-						var width:String = "";
-						var height:String = "";
-						
-						if (element.has.size) {
-							
-							width = height = substitute (element.att.size);
-							
-						}
-						
-						if (element.has.width) {
-							
-							width = substitute (element.att.width);
-							
-						}
-						
-						if (element.has.height) {
-							
-							height = substitute (element.att.height);
-							
-						}
-						
-						icons.add (new Icon (name, width, height));*/
 						
 						var name = "";
 						
@@ -1141,6 +1042,7 @@ class NMMLParser extends NMEProject {
 						
 						var path = PathHelper.combine (extensionPath, substitute (element.att.path));
 						var name = "";
+						var type = null;
 						
 						if (element.has.name) {
 							
@@ -1154,7 +1056,19 @@ class NMMLParser extends NMEProject {
 							
 						}
 						
-						libraries.push (new Library (path, name));
+						if (element.has.type) {
+							
+							switch (element.att.type) {
+								
+								case "swf": type = LibraryType.SWF;
+								case "swflite": type = LibraryType.SWF_LITE;
+								case "xfl": type = LibraryType.XFL;
+								
+							}
+							
+						}
+						
+						libraries.push (new Library (path, name, type));
 					
 					case "ssl":
 						
